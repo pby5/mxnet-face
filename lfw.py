@@ -8,7 +8,7 @@ import sys
 import argparse,logging
 import mxnet as mx
 import cv2
-from lightened_cnn import lightened_cnn_b_feature
+from lightened_cnn import lightened_cnn_b_feature,lightened_cnn_b_feature1,lightened_cnn_a_feature,lightened_cnn_a_feature1
 
 ctx = mx.gpu(0)
 
@@ -22,10 +22,12 @@ def load_pairs(pairs_path):
     assert(len(pairs) == 6000)
     return np.array(pairs)
 
+'''
 def load_exector(model_prefix, epoch, size):
     _, model_args, model_auxs = mx.model.load_checkpoint(model_prefix, epoch)
     symbol = lightened_cnn_b_feature()
     return symbol, model_args, model_auxs
+'''
 
 def pairs_info(pair, suffix):
     if len(pair) == 3:
@@ -43,8 +45,10 @@ def pairs_info(pair, suffix):
 
 def read2img(root, name1, name2, size, ctx):
     pair_arr = np.zeros((2, 1, size, size), dtype=float)
+    #read img and convert to gray
     img1 = np.expand_dims(cv2.imread(os.path.join(root, name1), 0), axis=0)
     img2 = np.expand_dims(cv2.imread(os.path.join(root, name2), 0), axis=0)
+    print img1.shape,img2.shape
     assert(img1.shape == img2.shape == (1, size, size))
     pair_arr[0][:] = img1/255.0
     pair_arr[1][:] = img2/255.0
@@ -73,7 +77,8 @@ def find_best_threshold(thresholds, predicts):
 
 def acc(predict_file):
     print("...Computing accuracy.")
-    folds = KFold(n=6000, n_folds=10, shuffle=False)
+    #10 folds cross validation
+    folds      = KFold(n=6000, n_folds=10, shuffle=False)
     thresholds = np.arange(-1.0, 1.0, 0.005)
     accuracy = []
     thd = []
@@ -91,7 +96,9 @@ def get_predict_file(args):
     assert(os.path.exists(args.lfw_align))
     pairs = load_pairs(args.pairs)
     _, model_args, model_auxs = mx.model.load_checkpoint(args.model_prefix, args.epoch)
-    symbol = lightened_cnn_b_feature()
+    #add cnn feature
+    #symbol = lightened_cnn_b_feature()
+    symbol = lightened_cnn_b_feature1()
     with open(args.predict_file, 'w') as f:
         for pair in pairs:
             name1, name2, same = pairs_info(pair, args.suffix)
@@ -101,6 +108,7 @@ def get_predict_file(args):
             exector.forward(is_train=False)
             exector.outputs[0].wait_to_read()
             output = exector.outputs[0].asnumpy()
+            #cos distance
             dis = np.dot(output[0], output[1])/np.linalg.norm(output[0])/np.linalg.norm(output[1])
             f.write(name1 + '\t' + name2 + '\t' + str(dis) + '\t' + str(same) + '\n')
 
@@ -129,21 +137,30 @@ def main():
                         help='The file which contains similarity distance of every pair image given in pairs.txt')
     args = parser.parse_args()
     logging.info(args)
+
     if not os.path.isfile(args.pairs):
         logging.info("Error: LFW pairs (--lfwPairs) file not found.")
         logging.info("Download from http://vis-www.cs.umass.edu/lfw/pairs.txt.")
         logging.info("Default location:", "./pairs.txt")
         sys.exit(-1)
+
     print("Loading embeddings done")
     if not os.path.exists(args.lfw_align):
         logging.info("Error: lfw dataset not aligned.")
         logging.info("Please use ./utils/align_face.py to align lfw firstly")
         sys.exit(-1)
+
+    #when predict file and your should do delete predict file first
+    if os.path.isfile(args.predict_file):
+        os.remove(args.predict_file)
     if not os.path.isfile(args.predict_file):
         logging.info("begin generate the predict.txt.")
         get_predict_file(args)
         logging.info("predict.txt has benn generated")
-    print_result(args)
+        print_result(args)
 
 if __name__ == '__main__':
     main()
+
+
+

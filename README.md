@@ -1,6 +1,10 @@
 Using [MXNet](https://github.com/dmlc/mxnet) for Face-related Algorithm
 -------------------------
 -------------------------
+Modify
+
+it is based on code in[tornadomeet](https://github.com/tornadomeet/mxnet-face),thanks for his sharing and I modify some bugs and add other networks due to paper and wu xiang's github code is differnect.
+my work is based on CASIA-WebFace while not clean CASIA-WebFace and get '0.9625+-0.0113'accuray on LFW dataset
 
 About
 --------

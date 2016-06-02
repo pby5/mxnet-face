@@ -1,6 +1,9 @@
 #!/usr/bin/env sh 
 
-align_data_path=/home/work/data/Face/LFW/lfw-align
+#align_data_path=/home/work/data/Face/LFW/lfw-align
+align_data_path=/home/gavinpan/workspace/dataset/lfw/lfw-align-deep
+#align_data_path=/home/gavinpan/workspace/dataset/lfw/lfw-align
+
 model_prefix=model/lightened_cnn/lightened_cnn
 epoch=166
 # evaluate on lfw
